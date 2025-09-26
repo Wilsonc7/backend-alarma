@@ -1,1 +1,25 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Firebase/Google credentials
 serviceAccountKey.json
+
+# Logs
+logs
+*.log
+logs/*.log
+
+# Editor configs
+.vscode/
+.idea/
+.DS_Store
+*.swp
