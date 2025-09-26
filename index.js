@@ -65,20 +65,19 @@ app.post("/send-notification", async (req, res) => {
 
     console.log(`✅ Notificación enviada a zona=${zona}:`, response);
 
-    res.json({ success: true, zona, enviados: response.successCount, fallidos: response.failureCount });
+    res.json({
+      success: true,
+      zona,
+      enviados: response.successCount,
+      fallidos: response.failureCount,
+    });
   } catch (error) {
     console.error("❌ Error enviando notificación:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
-
-// ================== 🔍 Debug tokens ==================
-app.get("/debug-tokens", (req, res) => {
-  res.json(tokensPorZona);
-});
-
-// ================== (Opcional) Obtener zona por teléfono ==================
+// ================== (Opcional) Obtener zona ==================
 app.get("/get-zona", (req, res) => {
   const { telefono } = req.query;
   if (!telefono) {
@@ -88,6 +87,11 @@ app.get("/get-zona", (req, res) => {
   // ⚠️ Por ahora es fijo (puedes mejorarlo con DB en el futuro)
   const zona = "h3m38";
   res.json({ ok: true, zona });
+});
+
+// ================== (Debug) Listar tokens ==================
+app.get("/debug-tokens", (req, res) => {
+  res.json(tokensPorZona);
 });
 
 // ================== 🚀 Iniciar servidor ==================
