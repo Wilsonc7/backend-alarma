@@ -53,18 +53,20 @@ app.post("/send-notification", async (req, res) => {
       return res.status(404).json({ error: `No hay tokens registrados en zona ${zona}` });
     }
 
-    // ✅ Estructura correcta para sendMulticast
-    const response = await admin.messaging().sendMulticast({
-      tokens: tokens,
-      notification: {
-        title: title,
-        body: body,
-      },
+    // ✅ La forma correcta de enviar notificaciones múltiples
+    const response = await admin.messaging().sendEachForMulticast({
+      tokens,
+      notification: { title, body },
     });
 
     console.log(`✅ Notificación enviada a zona=${zona}:`, response);
 
-    res.json({ success: true, zona, enviados: response.successCount, fallidos: response.failureCount });
+    res.json({
+      success: true,
+      zona,
+      enviados: response.successCount,
+      fallidos: response.failureCount,
+    });
   } catch (error) {
     console.error("❌ Error enviando notificación:", error);
     res.status(500).json({ error: error.message });
