@@ -1,54 +1,49 @@
-import express from "express";
-import axios from "axios";
+// ===================================================================
+// 🚨 Backend Alarma Comunitaria - index.js
+// ===================================================================
+const express = require("express");
+const bodyParser = require("body-parser");
+const admin = require("firebase-admin");
+require("dotenv").config();
 
 const app = express();
-app.use(express.json());
+app.use(bodyParser.json());
 
-// 🔑 Server key de Firebase (copia desde Firebase Console > Configuración del proyecto > Cuentas de servicio > Token de servidor)
-const FCM_SERVER_KEY = process.env.FCM_SERVER_KEY;
+// ================== 🔥 Inicializar Firebase con .env ==================
+admin.initializeApp({
+  credential: admin.credential.cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  }),
+});
 
-// Endpoint que el ESP32 llamará
-app.post("/notificar", async (req, res) => {
+// ================== 🚨 Endpoint para enviar notificación ==============
+app.post("/send-notification", async (req, res) => {
   try {
-    const { titulo, mensaje, zona } = req.body;
+    const { token, title, body } = req.body;
 
-    if (!titulo || !mensaje || !zona) {
-      return res.status(400).json({ error: "Faltan campos en el body" });
+    if (!token || !title || !body) {
+      return res.status(400).json({ error: "Faltan parámetros" });
     }
 
-    // 📡 Payload de Firebase
-    const payload = {
-      notification: {
-        title: titulo,
-        body: mensaje
-      },
-      data: {
-        zona: zona
-      },
-      topic: zona // 👈 todos los móviles suscritos a esta zona reciben la notificación
+    const message = {
+      notification: { title, body },
+      token,
     };
 
-    // 🚀 Enviar a FCM
-    const response = await axios.post(
-      "https://fcm.googleapis.com/fcm/send",
-      payload,
-      {
-        headers: {
-          "Authorization": `key=${FCM_SERVER_KEY}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
+    const response = await admin.messaging().send(message);
+    console.log("✅ Notificación enviada:", response);
 
-    console.log("✅ Notificación enviada:", response.data);
-    res.json({ ok: true, fcm: response.data });
-  } catch (err) {
-    console.error("❌ Error enviando notificación:", err.message);
-    res.status(500).json({ error: "Error interno" });
+    res.json({ success: true, response });
+  } catch (error) {
+    console.error("❌ Error enviando notificación:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
+// ================== 🚀 Iniciar servidor ==================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Backend Alarma escuchando en puerto ${PORT}`);
+  console.log(`🚀 Servidor backend alarma escuchando en puerto ${PORT}`);
 });
