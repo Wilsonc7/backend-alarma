@@ -53,11 +53,16 @@ app.post("/send-notification", async (req, res) => {
       return res.status(404).json({ error: `No hay tokens registrados en zona ${zona}` });
     }
 
-    // ✅ Estructura correcta
-    const response = await admin.messaging().sendMulticast({
+    // ✅ Formato correcto para FCM
+    const message = {
+      notification: {
+        title,
+        body,
+      },
       tokens,
-      notification: { title, body },
-    });
+    };
+
+    const response = await admin.messaging().sendMulticast(message);
 
     console.log(`✅ Notificación enviada a zona=${zona}`, response);
 
@@ -77,18 +82,16 @@ app.post("/send-notification", async (req, res) => {
   }
 });
 
-// ================== 🔍 Debug tokens ==================
-app.get("/debug-tokens", (req, res) => {
-  res.json(tokensPorZona);
-});
-
-// ================== 🧹 Reset tokens ==================
-app.post("/reset-tokens", (req, res) => {
-  for (const zona in tokensPorZona) {
-    tokensPorZona[zona] = [];
+// ================== (Opcional) Obtener zona ==================
+app.get("/get-zona", (req, res) => {
+  const { telefono } = req.query;
+  if (!telefono) {
+    return res.status(400).json({ error: "Falta parámetro telefono" });
   }
-  console.log("🧹 Todos los tokens fueron limpiados");
-  res.json({ ok: true, message: "Tokens reseteados" });
+
+  // ⚠️ Por ahora es fijo (puedes mejorarlo con DB en el futuro)
+  const zona = "h3m38";
+  res.json({ ok: true, zona });
 });
 
 // ================== 🚀 Iniciar servidor ==================
