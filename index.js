@@ -53,24 +53,18 @@ app.post("/send-notification", async (req, res) => {
       return res.status(404).json({ error: `No hay tokens registrados en zona ${zona}` });
     }
 
-    const message = {
-      notification: { title, body },
-    };
-
-    // ✅ Enviar multicast correctamente
+    // ✅ Estructura correcta para sendMulticast
     const response = await admin.messaging().sendMulticast({
-      tokens,
-      ...message,
+      tokens: tokens,
+      notification: {
+        title: title,
+        body: body,
+      },
     });
 
     console.log(`✅ Notificación enviada a zona=${zona}:`, response);
 
-    res.json({
-      success: true,
-      zona,
-      enviados: response.successCount,
-      fallidos: response.failureCount,
-    });
+    res.json({ success: true, zona, enviados: response.successCount, fallidos: response.failureCount });
   } catch (error) {
     console.error("❌ Error enviando notificación:", error);
     res.status(500).json({ error: error.message });
@@ -87,11 +81,6 @@ app.get("/get-zona", (req, res) => {
   // ⚠️ Por ahora es fijo (puedes mejorarlo con DB en el futuro)
   const zona = "h3m38";
   res.json({ ok: true, zona });
-});
-
-// ================== (Debug) Listar tokens ==================
-app.get("/debug-tokens", (req, res) => {
-  res.json(tokensPorZona);
 });
 
 // ================== 🚀 Iniciar servidor ==================
