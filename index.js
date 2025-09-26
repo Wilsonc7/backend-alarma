@@ -14,7 +14,7 @@ admin.initializeApp({
   credential: admin.credential.cert({
     projectId: process.env.FIREBASE_PROJECT_ID,
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"), // 🔧 Fix para Railway
+    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"), // fix para Railway
   }),
 });
 
@@ -35,11 +35,10 @@ app.post("/register-token", (req, res) => {
   }
 
   console.log(`📲 Token registrado en zona=${zona}, total=${tokensPorZona[zona].length}`);
-
   res.json({ ok: true, zona, tokens: tokensPorZona[zona] });
 });
 
-// ================== 🚨 Enviar notificación a toda una zona ==================
+// ================== 🚨 Enviar notificación ==================
 app.post("/send-notification", async (req, res) => {
   try {
     const { zona, title, body } = req.body;
@@ -53,12 +52,12 @@ app.post("/send-notification", async (req, res) => {
       return res.status(404).json({ error: `No hay tokens registrados en zona ${zona}` });
     }
 
-    // ✅ La forma correcta de enviar notificaciones múltiples
-    const response = await admin.messaging().sendEachForMulticast({
-      tokens,
+    const message = {
       notification: { title, body },
-    });
+      tokens,
+    };
 
+    const response = await admin.messaging().sendMulticast(message);
     console.log(`✅ Notificación enviada a zona=${zona}:`, response);
 
     res.json({
@@ -66,6 +65,10 @@ app.post("/send-notification", async (req, res) => {
       zona,
       enviados: response.successCount,
       fallidos: response.failureCount,
+      detalles: response.responses.map(r => ({
+        ok: r.success,
+        error: r.error?.message || null,
+      })),
     });
   } catch (error) {
     console.error("❌ Error enviando notificación:", error);
@@ -73,16 +76,18 @@ app.post("/send-notification", async (req, res) => {
   }
 });
 
-// ================== (Opcional) Obtener zona ==================
-app.get("/get-zona", (req, res) => {
-  const { telefono } = req.query;
-  if (!telefono) {
-    return res.status(400).json({ error: "Falta parámetro telefono" });
-  }
+// ================== 🔍 Debug de tokens ==================
+app.get("/debug-tokens", (req, res) => {
+  res.json(tokensPorZona);
+});
 
-  // ⚠️ Por ahora es fijo (puedes mejorarlo con DB en el futuro)
-  const zona = "h3m38";
-  res.json({ ok: true, zona });
+// ================== ♻️ Reset tokens ==================
+app.get("/reset-tokens", (req, res) => {
+  for (const zona in tokensPorZona) {
+    tokensPorZona[zona] = [];
+  }
+  console.log("♻️ Todos los tokens reseteados");
+  res.json({ ok: true, message: "Todos los tokens reseteados" });
 });
 
 // ================== 🚀 Iniciar servidor ==================
