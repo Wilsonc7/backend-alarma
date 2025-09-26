@@ -53,16 +53,11 @@ app.post("/send-notification", async (req, res) => {
       return res.status(404).json({ error: `No hay tokens registrados en zona ${zona}` });
     }
 
-    // ✅ Formato correcto para FCM
-    const message = {
-      notification: {
-        title,
-        body,
-      },
+    // ✅ Usamos sendEachForMulticast en lugar de sendMulticast
+    const response = await admin.messaging().sendEachForMulticast({
+      notification: { title, body },
       tokens,
-    };
-
-    const response = await admin.messaging().sendMulticast(message);
+    });
 
     console.log(`✅ Notificación enviada a zona=${zona}`, response);
 
@@ -80,18 +75,6 @@ app.post("/send-notification", async (req, res) => {
     console.error("❌ Error enviando notificación:", error);
     res.status(500).json({ error: error.message });
   }
-});
-
-// ================== (Opcional) Obtener zona ==================
-app.get("/get-zona", (req, res) => {
-  const { telefono } = req.query;
-  if (!telefono) {
-    return res.status(400).json({ error: "Falta parámetro telefono" });
-  }
-
-  // ⚠️ Por ahora es fijo (puedes mejorarlo con DB en el futuro)
-  const zona = "h3m38";
-  res.json({ ok: true, zona });
 });
 
 // ================== 🚀 Iniciar servidor ==================
