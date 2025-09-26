@@ -59,7 +59,26 @@ app.post("/send-notification", async (req, res) => {
     };
 
     const response = await admin.messaging().sendMulticast(message);
-    console.log(`✅ Notificación enviada a zona=${zona}:`, response);
+
+    // 🔧 Limpiar tokens inválidos
+    response.responses.forEach((resp, idx) => {
+      if (!resp.success) {
+        const errorCode = resp.error?.code || "desconocido";
+        console.log(`⚠️ Token inválido en zona=${zona}: ${tokens[idx]} (${errorCode})`);
+
+        if (
+          errorCode === "messaging/invalid-argument" ||
+          errorCode === "messaging/registration-token-not-registered"
+        ) {
+          tokensPorZona[zona] = tokensPorZona[zona].filter((t) => t !== tokens[idx]);
+        }
+      }
+    });
+
+    console.log(`✅ Notificación enviada a zona=${zona}:`, {
+      enviados: response.successCount,
+      fallidos: response.failureCount,
+    });
 
     res.json({ success: true, zona, enviados: response.successCount, fallidos: response.failureCount });
   } catch (error) {
@@ -68,7 +87,12 @@ app.post("/send-notification", async (req, res) => {
   }
 });
 
-// ================== (Opcional) Obtener zona ==================
+// ================== 🔍 Debug tokens ==================
+app.get("/debug-tokens", (req, res) => {
+  res.json(tokensPorZona);
+});
+
+// ================== (Opcional) Obtener zona por teléfono ==================
 app.get("/get-zona", (req, res) => {
   const { telefono } = req.query;
   if (!telefono) {
