@@ -55,30 +55,15 @@ app.post("/send-notification", async (req, res) => {
 
     const message = {
       notification: { title, body },
-      tokens,
     };
 
-    const response = await admin.messaging().sendMulticast(message);
-
-    // 🔧 Limpiar tokens inválidos
-    response.responses.forEach((resp, idx) => {
-      if (!resp.success) {
-        const errorCode = resp.error?.code || "desconocido";
-        console.log(`⚠️ Token inválido en zona=${zona}: ${tokens[idx]} (${errorCode})`);
-
-        if (
-          errorCode === "messaging/invalid-argument" ||
-          errorCode === "messaging/registration-token-not-registered"
-        ) {
-          tokensPorZona[zona] = tokensPorZona[zona].filter((t) => t !== tokens[idx]);
-        }
-      }
+    // ✅ Enviar multicast correctamente
+    const response = await admin.messaging().sendMulticast({
+      tokens,
+      ...message,
     });
 
-    console.log(`✅ Notificación enviada a zona=${zona}:`, {
-      enviados: response.successCount,
-      fallidos: response.failureCount,
-    });
+    console.log(`✅ Notificación enviada a zona=${zona}:`, response);
 
     res.json({ success: true, zona, enviados: response.successCount, fallidos: response.failureCount });
   } catch (error) {
@@ -86,6 +71,7 @@ app.post("/send-notification", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // ================== 🔍 Debug tokens ==================
 app.get("/debug-tokens", (req, res) => {
