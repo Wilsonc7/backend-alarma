@@ -14,7 +14,7 @@ admin.initializeApp({
   credential: admin.credential.cert({
     projectId: process.env.FIREBASE_PROJECT_ID,
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"), // fix para Railway
+    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
   }),
 });
 
@@ -35,10 +35,11 @@ app.post("/register-token", (req, res) => {
   }
 
   console.log(`📲 Token registrado en zona=${zona}, total=${tokensPorZona[zona].length}`);
+
   res.json({ ok: true, zona, tokens: tokensPorZona[zona] });
 });
 
-// ================== 🚨 Enviar notificación ==================
+// ================== 🚨 Enviar notificación a toda una zona ==================
 app.post("/send-notification", async (req, res) => {
   try {
     const { zona, title, body } = req.body;
@@ -52,13 +53,13 @@ app.post("/send-notification", async (req, res) => {
       return res.status(404).json({ error: `No hay tokens registrados en zona ${zona}` });
     }
 
-    const message = {
-      notification: { title, body },
+    // ✅ Estructura correcta
+    const response = await admin.messaging().sendMulticast({
       tokens,
-    };
+      notification: { title, body },
+    });
 
-    const response = await admin.messaging().sendMulticast(message);
-    console.log(`✅ Notificación enviada a zona=${zona}:`, response);
+    console.log(`✅ Notificación enviada a zona=${zona}`, response);
 
     res.json({
       success: true,
@@ -76,18 +77,18 @@ app.post("/send-notification", async (req, res) => {
   }
 });
 
-// ================== 🔍 Debug de tokens ==================
+// ================== 🔍 Debug tokens ==================
 app.get("/debug-tokens", (req, res) => {
   res.json(tokensPorZona);
 });
 
-// ================== ♻️ Reset tokens ==================
-app.get("/reset-tokens", (req, res) => {
+// ================== 🧹 Reset tokens ==================
+app.post("/reset-tokens", (req, res) => {
   for (const zona in tokensPorZona) {
     tokensPorZona[zona] = [];
   }
-  console.log("♻️ Todos los tokens reseteados");
-  res.json({ ok: true, message: "Todos los tokens reseteados" });
+  console.log("🧹 Todos los tokens fueron limpiados");
+  res.json({ ok: true, message: "Tokens reseteados" });
 });
 
 // ================== 🚀 Iniciar servidor ==================
