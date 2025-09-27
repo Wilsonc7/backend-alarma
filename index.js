@@ -84,6 +84,15 @@ app.get("/get-zona", (req, res) => {
   res.json({ ok: true, zona });
 });
 
+// ================== 🐛 Debug: versión actual ==================
+app.get("/debug-version", (req, res) => {
+  res.json({
+    version: process.env.RAILWAY_GIT_COMMIT_SHA || "local-dev",
+    branch: process.env.RAILWAY_GIT_BRANCH || "unknown",
+    msg: "Backend alarma comunitaria funcionando 🚀"
+  });
+});
+
 // ================== 🚀 Iniciar servidor ==================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
