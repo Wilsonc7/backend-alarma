@@ -84,13 +84,27 @@ app.get("/get-zona", (req, res) => {
   res.json({ ok: true, zona });
 });
 
-// ================== 🐛 Debug: versión actual ==================
-app.get("/debug-version", (req, res) => {
-  res.json({
-    version: process.env.RAILWAY_GIT_COMMIT_SHA || "local-dev",
-    branch: process.env.RAILWAY_GIT_BRANCH || "unknown",
-    msg: "Backend alarma comunitaria funcionando 🚀"
-  });
+// ================== 🧪 Debug directo FCM ==================
+app.get("/debug-fcm", async (req, res) => {
+  try {
+    const testToken = req.query.token;
+    if (!testToken) {
+      return res.status(400).json({ error: "Falta ?token= en la URL" });
+    }
+
+    const response = await admin.messaging().send({
+      token: testToken,
+      notification: {
+        title: "🚀 Test Debug FCM",
+        body: "Notificación de prueba directa desde Railway",
+      },
+    });
+
+    res.json({ ok: true, response });
+  } catch (error) {
+    console.error("❌ Error en /debug-fcm:", error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
 });
 
 // ================== 🚀 Iniciar servidor ==================
