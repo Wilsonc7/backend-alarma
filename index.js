@@ -73,7 +73,7 @@ app.post("/send-notification", async (req, res) => {
   }
 });
 
-// ================== (Opcional) Obtener zona ==================
+// ================== (Test) Obtener zona ==================
 app.get("/get-zona", (req, res) => {
   const { telefono } = req.query;
   if (!telefono) {
@@ -96,7 +96,7 @@ app.get("/debug-fcm", async (req, res) => {
       token: testToken,
       notification: {
         title: "🚀 Test Debug FCM",
-        body: "Notificación de prueba directa desde Railway",
+        body: "Notificación de prueba directa desde Render",
       },
     });
 
@@ -105,17 +105,6 @@ app.get("/debug-fcm", async (req, res) => {
     console.error("❌ Error en /debug-fcm:", error);
     res.status(500).json({ ok: false, error: error.message });
   }
-});
-
-// ================== 🐞 Debug ENV ==================
-app.get("/debug-env", (req, res) => {
-  res.json({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKeyFirstLine: process.env.FIREBASE_PRIVATE_KEY?.split("\n")[0],
-    privateKeyLastLine: process.env.FIREBASE_PRIVATE_KEY?.split("\n").slice(-1)[0],
-    keyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0
-  });
 });
 
 // ================== 🚀 Iniciar servidor ==================
