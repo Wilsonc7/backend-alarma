@@ -53,8 +53,7 @@ app.post("/send-notification", async (req, res) => {
       return res.status(404).json({ error: `No hay tokens registrados en zona ${zona}` });
     }
 
-    // 🔥 Usamos la API moderna
-    const response = await admin.messaging().sendEachForMulticast({
+    const response = await admin.messaging().sendMulticast({
       tokens,
       notification: { title, body },
     });
@@ -66,10 +65,7 @@ app.post("/send-notification", async (req, res) => {
       zona,
       enviados: response.successCount,
       fallidos: response.failureCount,
-      detalles: response.responses.map(r => ({
-        ok: r.success,
-        error: r.error?.message || null,
-      })),
+      detalles: response.responses.map(r => ({ ok: r.success, error: r.error?.message || null })),
     });
   } catch (error) {
     console.error("❌ Error enviando notificación:", error);
@@ -109,6 +105,17 @@ app.get("/debug-fcm", async (req, res) => {
     console.error("❌ Error en /debug-fcm:", error);
     res.status(500).json({ ok: false, error: error.message });
   }
+});
+
+// ================== 🐞 Debug ENV ==================
+app.get("/debug-env", (req, res) => {
+  res.json({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKeyFirstLine: process.env.FIREBASE_PRIVATE_KEY?.split("\n")[0],
+    privateKeyLastLine: process.env.FIREBASE_PRIVATE_KEY?.split("\n").slice(-1)[0],
+    keyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0
+  });
 });
 
 // ================== 🚀 Iniciar servidor ==================
