@@ -53,28 +53,35 @@ app.post("/send-notification", async (req, res) => {
       return res.status(404).json({ error: `No hay tokens registrados en zona ${zona}` });
     }
 
-    // ✅ Usamos sendEachForMulticast en lugar de sendMulticast
-    const response = await admin.messaging().sendEachForMulticast({
-      notification: { title, body },
+    const response = await admin.messaging().sendMulticast({
       tokens,
+      notification: { title, body },
     });
 
-    console.log(`✅ Notificación enviada a zona=${zona}`, response);
+    console.log("📡 Respuesta de FCM:", JSON.stringify(response, null, 2));
 
     res.json({
       success: true,
       zona,
       enviados: response.successCount,
       fallidos: response.failureCount,
-      detalles: response.responses.map(r => ({
-        ok: r.success,
-        error: r.error?.message || null,
-      })),
+      detalles: response.responses.map(r => ({ ok: r.success, error: r.error?.message || null })),
     });
   } catch (error) {
     console.error("❌ Error enviando notificación:", error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// ================== (Opcional) Obtener zona ==================
+app.get("/get-zona", (req, res) => {
+  const { telefono } = req.query;
+  if (!telefono) {
+    return res.status(400).json({ error: "Falta parámetro telefono" });
+  }
+
+  const zona = "h3m38"; // fijo por ahora
+  res.json({ ok: true, zona });
 });
 
 // ================== 🚀 Iniciar servidor ==================
